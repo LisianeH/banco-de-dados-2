@@ -37,6 +37,89 @@ CREATE INDEX IFK_Rel_02 ON HOSPEDAGEM (codHospede);
 CREATE INDEX IFK_Rel_03 ON HOSPEDAGEM (codAtendente); 
 
 ------------------------------------
+-- Tabela para Nomes
+CREATE TABLE TABELA_NOMES (
+    nome_pessoa VARCHAR2(50) PRIMARY KEY
+);
+
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Yasmim');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Roberto');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Lisiane');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Artur');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Gustavo');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Lorenzo');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Murilo');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Lucca');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Vitor');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Thiago');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Rafael');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Yanni');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Nico');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Davi');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('William');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Ana');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Carlos');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Beatriz');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Marcos');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Pedro');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Camila');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Juliana');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Fernanda');
+INSERT INTO TABELA_NOMES (nome_pessoa) VALUES ('Gabriel');
+-- no appex deve ser inserido um de cada vez...
+SELECT * FROM TABELA_NOMES;
+
+-- Tabela para Sobrenomes
+CREATE TABLE TABELA_SOBRENOMES (
+    sobrenome_pessoa VARCHAR2(50) PRIMARY KEY
+);
+
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Secondshirt');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Camillo');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Hoffmeister');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Raguse');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Muller');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Pandolfo');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Sena');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Sindeaux');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Baldi');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Kernel');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Rafaellos');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Dufech');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Shadow');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Rubim');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Mestre');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Silva');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Oliveira');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Pereira');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Ferreira');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Almeida');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Gomes');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Ribeiro');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Martins');
+INSERT INTO TABELA_SOBRENOMES (sobrenome_pessoa) VALUES ('Barbosa');
+-- no appex deve ser inserido um de cada vez...
+SELECT * FROM TABELA_SOBRENOMES;
+
+-- Tabela para Cidades
+CREATE TABLE CIDADE (
+    nome_cidade VARCHAR2(50) PRIMARY KEY
+);
+
+INSERT INTO CIDADE (nome_cidade) VALUES ('Porto Alegre');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Canoas');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Gravataí');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Sapucaia');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Novo Hamburgo');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Gramado');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Canela');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Rolante');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Dois Irmãos');
+INSERT INTO CIDADE (nome_cidade) VALUES ('Ivoti');
+-- no appex deve ser inserido um de cada vez...
+SELECT * FROM CIDADE;
+
+------------------------------------
 -- Questão 1.a)
 CREATE OR REPLACE PROCEDURE P_INSERT_HOSPEDES (
     qtd_hospedes    IN INT,
