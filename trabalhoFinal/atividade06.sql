@@ -37,37 +37,50 @@ CREATE INDEX IFK_Rel_02 ON HOSPEDAGEM (codHospede);
 CREATE INDEX IFK_Rel_03 ON HOSPEDAGEM (codAtendente); 
 
 ------------------------------------
+-- Questão 1.a)
 CREATE OR REPLACE PROCEDURE P_INSERT_HOSPEDES (
     qtd_hospedes    IN INT,
     idade_min       IN INT,
     idade_max       IN INT
 ) AS
-    v_nome              VARCHAR2( 50 );
-    v_cidade            VARCHAR2( 50 );
-    v_dataNascimento    DATE;
+    nome_random              VARCHAR2( 100 );
+    sobrenome_random         VARCHAR2( 50 );
+    cidade_random            VARCHAR2( 50 );
+    dataNascimento_random    DATE;
+
 BEGIN
     -- Validação de faixa de idade
     IF idade_min < 18 OR idade_max > 65 OR idade_min >= idade_max THEN
         RAISE_APPLICATION_ERROR( -20001, 'Idades inválidas. Mínima é a partir de 18 anos, máxima é de 65 anos para reservas.' );
     END IF;
 
-    -- Dados na variavel
-    v_nomes( 'Ana', 'Carlos', 'Beatriz', 'Marcos', 'Lisiane', 'Pedro', 'Camila', 'Lucca', 'Juliana', 'Rafael', 'Fernanda', 'Gabriel' );
-    v__sobrenomes( 'Silva', 'Oliveira', 'Hoffmeister', 'Pereira', 'Ferreira', 'Almeida', 'Sindeaux', 'Gomes', 'Ribeiro', 'Martins', 'Barbosa' );
-    v_cidades( 'Porto Alegre', 'Canoas', 'Gravataí', 'Sapucaia', 'Novo Hamburgo', 'Gramado', 'Canela', 'Rolante', 'Dois Irmãos', 'Ivoti' );
-    v_datasNascimentos( '01/01/2000', '02/02/2002', '03/03/2003', '04/04/2004', '05/05/2005', '06/06/2006', '07/07/2007', '08/08/2008', '09/09/1999', '10/10/1990', '11/11/1980', '12/12/1970' );
-
     FOR i IN 1..qtd_hospedes LOOP
-        nome_random := v_nomes( TRUNC( DBMS_RANDOM.VALUE( 1, v_nomes.COUNT + 1) ) ) || ' ' || v__sobrenomes( TRUNC( DBMS_RANDOM.VALUE( 1, v__sobrenomes.COUNT + 1) ) );
-        cidade_random := v_cidades( TRUNC( DBMS_RANDOM.VALUE( 1, v_cidades.COUNT + 1) ) );
-        dataNascimento_random := v_datasNascimentos( TRUNC( DBMS_RANDOM.VALUE( 1, v_datasNascimentos.COUNT + 1) ) );
+        SELECT nome_pessoa INTO nome_random
+        FROM TABELA_NOMES
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
 
-        -- Inserindo na tabela
+        SELECT sobrenome_pessoa INTO sobrenome_random
+        FROM TABELA_SOBRENOMES
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        SELECT nome_cidade INTO cidade_random
+        FROM CIDADE
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        nome_random := nome_random || ' ' || sobrenome_random;
+        
+        dataNascimento_random := ADD_MONTHS( TRUNC( SYSDATE ), - ( TRUNC( DBMS_RANDOM.VALUE( idade_min, idade_max + 1 ) ) * 12 ) );
+        
         INSERT INTO HOSPEDE ( nome, cidade, dataNascimento )
         VALUES ( nome_random, cidade_random, dataNascimento_random );
     END LOOP;
-
-
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERT_HOSPEDES: ' || SQLERRM );
 END;
 
 -- FUNCIONAL
@@ -75,85 +88,72 @@ BEGIN
     P_INSERT_HOSPEDES( 1, 18, 65 );
 END;
 
+-- VERIFICA A INSERÇÃO
+SELECT * FROM HOSPEDE;
 
-
--- 1b) Escrever procedimento para inserir registros na tabela ATENDENTE
--- -> Receber por parâmetro a quantidade de atendentes que deverão ser gerados - Fixar
--- que o atendente 1 é superior de todos os demais
-
--- DICAS para as questões a e b:
--- • As cidades deverão ser obtidas aleatoriamente de uma tabela CIDADE.
--- • Para compor o nome do hospede, montar aleatoriamente NOME + SOBRENOME,
--- buscando de duas tabelas as quais se tenham nomes e sobrenomes. 
-
--- Criação das tabelas com nomes e sobrenomes aleatórios, inserção dos dados logo em seguida
-CREATE OR REPLACE PROCEDURE PRC_INSERE_ATENDENTES (
-    p_quantidade IN NUMBER
+------------------------------------
+-- Questão 1.b)
+CREATE OR REPLACE PROCEDURE P_INSERE_ATENDENTES (
+    qtd_atendentes IN INT
 ) AS
-    -- 1. Declaração de um tipo "array de strings"
-    TYPE t_lista_strings IS TABLE OF VARCHAR2(50);
+    nome_random              VARCHAR2( 100 );
+    sobrenome_random         VARCHAR2( 50 );
 
-    -- 2. Declaração das variáveis do tipo array, já inicializadas com os dados
-    v_nomes t_lista_strings := t_lista_strings(
-        'Yasmim', 'Roberto', 'Lisiane', 'Artur', 'Gustavo', 'Lorenzo', 'Murilo'
-        'Lucca', 'Vitor', 'Thiago', 'Rafael', 'Yanni', 'Nico', 'Davi', 'William'
-    );
-    
-    v_sobrenomes t_lista_strings := t_lista_strings(
-        'Secondshirt', 'Camillo', 'Hoffmeister', 'Raguse', 'Muller', 'Pandolfo', 'Sena'
-        'Sindeaux', 'Baldi', 'Kernel', 'Rafaellos', 'Dufech', 'Shadow', 'Rubim', 'Mestre'
-    );
-
-    -- Variáveis que continuam sendo usadas no processo
-    v_nome_aleatorio      VARCHAR2(50);
-    v_sobrenome_aleatorio VARCHAR2(50);
-    v_nome_completo       VARCHAR2(100);
-    v_cod_superior_geral  ATENDENTE.codAtendente%TYPE;
-
+    cod_atendente_superior_fixo NUMBER;
 BEGIN
-    -- Validação simples para evitar loops infinitos ou erros
-    IF p_quantidade <= 0 THEN
-        RETURN;
+    IF qtd_atendentes <= 0 THEN
+        RAISE_APPLICATION_ERROR( -20001, 'A quantidade de atendentes a ser gerada deve ser maior que zero.' );
     END IF;
 
-    -- *** INÍCIO DA MUDANÇA DE LÓGICA ***
-    -- Gera o nome do superior geral pegando valores aleatórios dos arrays
-    v_nome_aleatorio := v_nomes(TRUNC(DBMS_RANDOM.VALUE(1, v_nomes.COUNT + 1)));
-    v_sobrenome_aleatorio := v_sobrenomes(TRUNC(DBMS_RANDOM.VALUE(1, v_sobrenomes.COUNT + 1)));
-    v_nome_completo := v_nome_aleatorio || ' ' || v_sobrenome_aleatorio;
-    -- *** FIM DA MUDANÇA DE LÓGICA ***
+    -- Insere o primeiro atendente
+    SELECT nome_pessoa INTO nome_random
+    FROM TABELA_NOMES
+    ORDER BY DBMS_RANDOM.VALUE
+    FETCH FIRST 1 ROW ONLY;
 
-    -- A lógica para inserir o superior geral permanece a mesma, pois é a correta
-    SELECT sequencia.NEXTVAL INTO v_cod_superior_geral FROM DUAL;
-    INSERT INTO ATENDENTE (codAtendente, codSuperior, nome)
-    VALUES (v_cod_superior_geral, v_cod_superior_geral, v_nome_completo);
+    SELECT sobrenome_pessoa INTO sobrenome_random
+    FROM TABELA_SOBRENOMES
+    ORDER BY DBMS_RANDOM.VALUE
+    FETCH FIRST 1 ROW ONLY;
 
+    nome_random := nome_random || ' ' || sobrenome_random;
 
-    -- Loop para inserir os demais atendentes (do 2º até a quantidade desejada)
-    FOR i IN 2..p_quantidade LOOP
-        -- *** INÍCIO DA MUDANÇA DE LÓGICA ***
-        -- Gera um nome aleatório para cada novo atendente
-        v_nome_aleatorio := v_nomes(TRUNC(DBMS_RANDOM.VALUE(1, v_nomes.COUNT + 1)));
-        v_sobrenome_aleatorio := v_sobrenomes(TRUNC(DBMS_RANDOM.VALUE(1, v_sobrenomes.COUNT + 1)));
-        v_nome_completo := v_nome_aleatorio || ' ' || v_sobrenome_aleatorio;
-        -- *** FIM DA MUDANÇA DE LÓGICA ***
+    -- Faz a sequencia do código do superior
+    SELECT sequencia.NEXTVAL INTO cod_atendente_superior_fixo FROM DUAL;
 
-        -- Insere o atendente, usando o código do superior geral
-        INSERT INTO ATENDENTE (codSuperior, nome)
-        VALUES (v_cod_superior_geral, v_nome_completo);
+    INSERT INTO ATENDENTE ( codAtendente, codSuperior, nome )
+    VALUES ( cod_atendente_superior_fixo, cod_atendente_superior_fixo, nome_random );
+
+    FOR i IN 2..qtd_atendentes LOOP
+        SELECT nome_pessoa INTO nome_random
+        FROM TABELA_NOMES
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        SELECT sobrenome_pessoa INTO sobrenome_random
+        FROM TABELA_SOBRENOMES
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        nome_random := nome_random || ' ' || sobrenome_random;
+
+        INSERT INTO ATENDENTE ( codSuperior, nome )
+        VALUES ( cod_atendente_superior_fixo, nome_random ); 
     END LOOP;
-
     COMMIT;
-    DBMS_OUTPUT.PUT_LINE(p_quantidade || ' atendentes inseridos com sucesso.');
+
 EXCEPTION
     WHEN OTHERS THEN
-        ROLLBACK;
-        DBMS_OUTPUT.PUT_LINE('Erro ao inserir atendentes: ' || SQLERRM);
-        -- É uma boa prática relançar o erro para que a aplicação que chamou a procedure saiba que algo deu errado
-        RAISE;
+        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERT_ATENDENTES: ' || SQLERRM );
 END;
-/
 
+-- FUNCIONAL
 BEGIN
-    PRC_INSERE_ATENDENTES(15); -- Ou qualquer outro número
+    P_INSERE_ATENDENTES( 4 );
 END;
+
+-- VERIFICA A INSERÇÃO
+SELECT * FROM ATENDENTE;
+
+-- LIMPA TABELA DE ATENDENTE
+DELETE FROM ATENDENTE;
