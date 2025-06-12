@@ -121,7 +121,7 @@ SELECT * FROM CIDADE;
 
 ------------------------------------
 -- Questão 1.a)
-CREATE OR REPLACE PROCEDURE P_INSERT_HOSPEDES (
+CREATE OR REPLACE PROCEDURE P_INSERE_HOSPEDES (
     qtd_hospedes    IN INT,
     idade_min       IN INT,
     idade_max       IN INT
@@ -163,12 +163,12 @@ BEGIN
     COMMIT;
 EXCEPTION
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERT_HOSPEDES: ' || SQLERRM );
+        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERE_HOSPEDES: ' || SQLERRM );
 END;
 
 -- FUNCIONAL
 BEGIN
-    P_INSERT_HOSPEDES( 1, 18, 65 );
+    P_INSERE_HOSPEDES( 1, 18, 65 );
 END;
 
 -- VERIFICA A INSERÇÃO
@@ -227,7 +227,7 @@ BEGIN
 
 EXCEPTION
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERT_ATENDENTES: ' || SQLERRM );
+        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERE_ATENDENTES: ' || SQLERRM );
 END;
 
 -- FUNCIONAL
@@ -240,3 +240,110 @@ SELECT * FROM ATENDENTE;
 
 -- LIMPA TABELA DE ATENDENTE
 DELETE FROM ATENDENTE;
+
+------------------------------------
+-- Questão 1.c)
+CREATE OR REPLACE PROCEDURE P_INSERE_HOSPEDAGEM (
+    qtd_hospedagens     IN INT,
+    data_inicio         IN DATE,
+    data_fim            IN DATE
+) AS
+    v_codHospede      HOSPEDE.codHospede%TYPE;
+    v_codAtendente    ATENDENTE.codAtendente%TYPE;
+    
+    v_dataEntrada     DATE;
+    v_dataSaida       DATE;
+    v_numQuarto       HOSPEDAGEM.numQuarto%TYPE;
+    v_valorDiaria     HOSPEDAGEM.valorDiaria%TYPE;
+    
+    v_codHospedagem_existente HOSPEDAGEM.codHospedagem%TYPE;
+    v_dataEntrada_existente   HOSPEDAGEM.dataEntrada%TYPE;
+    
+    -- Para faciliar vamos deixar como variaveis a quantidade de quartos e valor da diária;
+    qtd_min_quarto      CONSTANT INT := 1;
+    qtd_max_quarto      CONSTANT INT := 100;
+    
+    min_valor_diaria    CONSTANT DECIMAL( 9,2 ) := 100.00;
+    max_valor_diaria    CONSTANT DECIMAL( 9,2 ) := 300.00;
+BEGIN
+    IF qtd_hospedagens <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'A quantidade de hospedagens a ser gerada deve ser maior que zero.');
+    END IF;
+
+    IF data_inicio IS NULL OR data_fim IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20002, 'As datas de início e fim do intervalo não podem ser nulas.');
+    END IF;
+
+    IF data_inicio > data_fim THEN
+        RAISE_APPLICATION_ERROR(-20003, 'A data de início do intervalo deve ser menor que a data de fim.');
+    END IF;
+
+    FOR i IN 1..qtd_hospedagens LOOP
+        SELECT codHospede INTO v_codHospede
+        FROM HOSPEDE
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        SELECT codAtendente INTO v_codAtendente
+        FROM ATENDENTE
+        ORDER BY DBMS_RANDOM.VALUE
+        FETCH FIRST 1 ROW ONLY;
+
+        v_dataEntrada := TRUNC( data_inicio + DBMS_RANDOM.VALUE( 0, TRUNC( data_fim ) - TRUNC( data_inicio ) + 1 ) );
+        
+        v_numQuarto := TRUNC( DBMS_RANDOM.VALUE( qtd_min_quarto, qtd_max_quarto + 1 ) );
+        
+        v_valorDiaria := ROUND( DBMS_RANDOM.VALUE( min_valor_diaria, max_valor_diaria ), 2 );
+        
+        BEGIN
+            SELECT codHospedagem, dataEntrada INTO v_codHospedagem_existente, v_dataEntrada_existente
+            FROM HOSPEDAGEM
+            WHERE numQuarto = v_numQuarto AND dataSaida IS NULL
+            ORDER BY dataEntrada DESC
+            FETCH FIRST 1 ROW ONLY;
+
+            UPDATE HOSPEDAGEM
+            SET dataSaida = v_dataEntrada - 1
+            WHERE codHospedagem = v_codHospedagem_existente;
+            
+            IF v_dataEntrada - 1 < v_dataEntrada_existente THEN
+                UPDATE HOSPEDAGEM
+                SET dataSaida = v_dataEntrada_existente
+                WHERE codHospedagem = v_codHospedagem_existente;
+            END IF;
+
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                NULL;
+        END;
+
+        IF DBMS_RANDOM.VALUE < 0.80 THEN 
+            v_dataSaida := v_dataEntrada + TRUNC( DBMS_RANDOM.VALUE( 1, 4 ) ); 
+        ELSE
+            v_dataSaida := NULL;
+        END IF;
+
+        INSERT INTO HOSPEDAGEM (codAtendente, codHospede, dataEntrada, dataSaida, numQuarto, valorDiaria)
+        VALUES (v_codAtendente, v_codHospede, v_dataEntrada, v_dataSaida, v_numQuarto, v_valorDiaria);
+        
+    END LOOP;
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE( 'Erro na procedure P_INSERE_HOSPEDAGEM: ' || SQLERRM );
+END;
+
+-- FUNCIONAL
+BEGIN
+    P_INSERE_HOSPEDAGEM(
+        2,
+        TO_DATE( '01/01/2024', 'DD/MM/YYYY' ),
+        TO_DATE( '31/01/2024', 'DD/MM/YYYY' )
+    );
+END;
+
+-- VERIFICA A INSERÇÃO
+SELECT * FROM HOSPEDAGEM;
+
+-- LIMPA TABELA DE HOSPEDAGEM
+DELETE FROM HOSPEDAGEM;
